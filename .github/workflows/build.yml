@@ -19,18 +19,13 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang make perl git xz-utils fakeroot dpkg libplist-utils
+          sudo apt-get install -y bash curl sudo xz-utils dpkg libplist-utils
 
-      - name: Install Theos
+      - name: Install Theos and toolchain
         env:
           THEOS: ${{ github.workspace }}/theos
         run: |
-          git clone --recursive https://github.com/theos/theos.git "$THEOS"
-          mkdir -p "$THEOS/sdks"
-          curl -L \
-            https://github.com/theos/sdks/releases/latest/download/iPhoneOS16.5.sdk.tar.xz \
-            -o /tmp/iPhoneOS16.5.sdk.tar.xz
-          tar -C "$THEOS/sdks" -xf /tmp/iPhoneOS16.5.sdk.tar.xz
+          bash -c "$(curl -fsSL https://raw.githubusercontent.com/theos/theos/master/bin/install-theos)"
 
       - name: Build packages
         env:
