@@ -1,0 +1,45 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang make perl git xz-utils fakeroot dpkg libplist-utils
+
+      - name: Install Theos
+        env:
+          THEOS: ${{ github.workspace }}/theos
+        run: |
+          git clone --recursive https://github.com/theos/theos.git "$THEOS"
+          mkdir -p "$THEOS/sdks"
+          curl -L \
+            https://github.com/theos/sdks/releases/latest/download/iPhoneOS16.5.sdk.tar.xz \
+            -o /tmp/iPhoneOS16.5.sdk.tar.xz
+          tar -C "$THEOS/sdks" -xf /tmp/iPhoneOS16.5.sdk.tar.xz
+
+      - name: Build packages
+        env:
+          THEOS: ${{ github.workspace }}/theos
+        run: make clean package FINALPACKAGE=1
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: appstoretroller-packages
+          path: packages/*.deb
+          if-no-files-found: error
